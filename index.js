@@ -15,16 +15,16 @@ function flatten(arr) {
   return [].concat.apply([], arr);
 }
 
-function vdomDOM(tag) {
+function vdomDOM(tag, state, context) {
   var dom = {tag: tag.type};
   var children;
   for (var prop in tag.props) {
     if (tag.props.hasOwnProperty(prop)) {
       if (prop === 'children') {
-        children = vdom(tag.props[prop]);
+        children = vdom(tag.props[prop], state, context);
       } else {
         dom.attrs = dom.attrs || {};
-        dom.attrs[prop] = vdom(tag.props[prop]);
+        dom.attrs[prop] = vdom(tag.props[prop], state, context);
       }
     }
   }
@@ -40,39 +40,43 @@ function vdomDOM(tag) {
   return dom;
 }
 
-function vdomReactClassComponent(Class, state) {
+function vdomReactClassComponent(Class, state, context) {
   var instance = new Class.type(Class.props);
   if (typeof state !== 'undefined') { instance.state = state; }
-  return vdom(instance.render());
+  if (typeof context !== 'undefined') { instance.context = context; }
+  return vdom(instance.render(), state, context);
 }
 
-function vdomReactElement(reactElement, state) {
+function vdomReactElement(reactElement, state, context) {
   return typeof reactElement.type === 'string' ?
-    vdomDOM(reactElement) :
-    vdomReactClassComponent(reactElement, state);
+    vdomDOM(reactElement, state, context) :
+    vdomReactClassComponent(reactElement, state, context);
 }
 
-function vdomReactComponent(reactComponent, state) {
+function vdomReactComponent(reactComponent, state, context) {
   if (typeof reactComponent.render !== 'function') {
     throw new Error('[react-vdom] component ' + reactComponent.constructor.name + ': missing render() method');
   }
   if (typeof state !== 'undefined') {
     reactComponent.state = state;
   }
-  return vdom(reactComponent.render());
+  if (typeof context !== 'undefined') {
+    reactComponent.context = context;
+  }
+  return vdom(reactComponent.render(), state, context);
 }
 
-function vdom(x, state) {
+function vdom(x, state, context) {
   try {
     if (Array.isArray(x)) {
       x = compact(flatten(x)).map(function (y) {
-        return vdom(y);
+        return vdom(y, state, context);
       });
       return x.length > 1 ? x : x[0];
     } else if (x instanceof React.Component) {
-      return vdomReactComponent(x, state);
+      return vdomReactComponent(x, state, context);
     } else if (x instanceof ReactElement) {
-      return vdomReactElement(x, state);
+      return vdomReactElement(x, state, context);
     }
     return x;
   } catch (e) {
