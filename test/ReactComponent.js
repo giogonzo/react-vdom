@@ -94,4 +94,86 @@ describe('ReactComponent', (tape) => {
     assert.deepEqual(expected, actual);
   });
 
+  tape.test('should handle mockContext argument', (assert) => {
+    assert.plan(1);
+    const expected = {
+      tag: 'div',
+      children: 'Giulio'
+    };
+    class Component extends React.Component {
+      constructor(...args) {
+        super(...args);
+      }
+      render() {
+        return <div>{ this.context.name }</div>
+      }
+    }
+    const actual = vdom(<Component />, undefined, { name: 'Giulio' });
+    assert.deepEqual(expected, actual);
+  });
+
+  tape.test('should handle mockContext argument, recursively', (assert) => {
+    assert.plan(1);
+    const expected = {
+      tag: 'div',
+      children: 'Giulio'
+    };
+    class Component extends React.Component {
+      constructor(...args) {
+        super(...args);
+      }
+      render() {
+        return this.props.children
+      }
+    }
+    class Child extends React.Component {
+      render() {
+        return <div>{ this.context.name }</div>;
+      }
+    }
+    const actual = vdom(
+      <Component>
+        <Component>
+          <Child/>
+        </Component>
+      </Component>
+    , undefined, { name: 'Giulio' });
+    assert.deepEqual(expected, actual);
+  });
+
+  tape.test('should handle mockContext argument, recursively through dom', (assert) => {
+    assert.plan(1);
+    const expected = {
+      tag: 'div',
+      children: {
+        tag: 'div',
+        children: 'Giulio'
+      }
+    };
+    class Child extends React.Component {
+      constructor(...args) {
+        super(...args);
+      }
+      render() {
+        return <div>{ this.context.name }</div>;
+      }
+    }
+    class Component extends React.Component {
+      constructor(...args) {
+        super(...args);
+      }
+      render() {
+        return <div><Child /></div>;
+      }
+    }
+    const actual = vdom(
+      <Component>
+        <Component>
+          <Child/>
+        </Component>
+      </Component>
+    , undefined, { name: 'Giulio' });
+    assert.deepEqual(expected, actual);
+  });
+
 });
