@@ -1,3 +1,5 @@
+var React = require('react');
+
 var falsy = [null, undefined, false];
 
 function compact(arr) {
@@ -63,6 +65,9 @@ function vdom(x, state, context) {
       }
       if (x.hasOwnProperty('$$typeof')) {
         return getComponent(x, state, context);
+      }
+      if (x instanceof React.Component) {
+        return getComponent(x.render(), state, context);
       }
     }
     return x;
